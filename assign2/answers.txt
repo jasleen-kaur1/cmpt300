@@ -1,0 +1,99 @@
+Questions and Answers
+
+SMP2: POSIX Threads
+
+Instructions 
+
+  1) Briefly explain why this application would be difficult to write using
+     multiple processes instead of threads.
+
+    Answer:
+     This application would be difficult to write using multiple processes as they do not share the same address space. Threads within the same process share address spaces. They have access to memory and resources of its processes, shared with all other threads in that process. Thus, allowing threads to easily read from and write to the same data structures and variables, which this application takes advantage of.
+
+  2) What is the significance of 'workperformed'?  How is it used?
+
+      Answer:
+   	 workperformed is used as a flag. It helps the threads wait for swapping of characters to finish if it's in the middle of swapping characters and helps strings to not be sorted out of order.
+
+  3) Explain exactly what is the type of 'fp' in the following declaration:
+       void *(*fp)(void *)
+
+       Answer:
+     fp is a function pointer pointing to a function. It takes a single parameter of type void*
+
+     Note:
+     void *(*fp)(void *) declares a pointer to function that takes argument of type void* and returns pointer of type void*
+
+  More Questions
+
+  1) Why do we not detach any of the enzyme threads? Would the program function
+     if we detached the sleeper thread?
+
+    Answer:
+     We do not detach any of the enzyme threads because if we were to detach them, all the allocated resources will be released on exit. Detach releases the resources needed to implement join. We need to wait for the thread to complete and thus do not use detach in the program. pthread_join() is seen as a blocking call, it blocks the calling thread until the other thread ends. Yes, the program will function if we detached the sleeper thread.  
+
+     Resources:
+     https://stackoverflow.com/questions/22803600/when-should-i-use-stdthreaddetach
+     https://thispointer.com/posix-detached-vs-joinable-threads-pthread_join-pthread_detach-examples/
+
+     Joining a thread means that one thread waits for the other to end, and are able to efficiently access its results. 
+
+  2) Why does the program use sched_yield? What happens if this is not used?
+     Will the swap counts always be identical?
+
+     QUESTION? What do you mean by identical?
+
+     Answer:
+     sched_yield function forces the running thread to relinquish the processor until it becomes the head of its thread list. In the program, this function allows other threads a chance to run. If this function is not used, the program still runs and sorts the string correctly and the swap counts are not identical.
+
+  3) Threads are cancelled if the string contains a 'C' e.g. "Cherub".
+     Why do we not include cancelled threads when adding up the total number
+     of swaps?
+
+     Answer:
+     We do not include cancelled threads when adding up total number of swaps because for cancelled threads we do not increment the swapcount as we do not initiate a swapping. The thread is cancelled before any swapping takes place. The swapcount from threads that finish instead of being cancelled are added to the total number of swaps.
+
+  4) What happens when a thread tries to join itself?
+
+      Answer:
+      When a thread tries to join itself a deadlock would occur.
+
+  5) Briefly explain how the sleeper thread is implemented.
+
+    Answer:
+    The sleeper thread is implemented by creating a new thread in which the sleeper_func is passed. This function calls the sleep() function, and gives specifically a sleep time of 5. After the thread wakes up, the program is exited. Thus, if the sleeper thread completes before all other threads then the program will exit. 
+
+  6) Briefly explain why PTHREAD_CANCEL_ASYNCHRONOUS is used in this MP.
+
+    Answer:
+    PTHREAD_CANCEL_ASYNCHRONOUS is used in this MP so that a thread can be cancelled at any time. This allows the thread to be cancelled immediately upon receiving a cancellation request.
+
+  7) Briefly explain the bug in Part II, #2 above.
+
+    Answer:
+    There was a memory bug in make_enzyme_threads function, where memory for info was only being allocated once. New memory for info is meant to be getting allocated inside the for loop for each iteration.
+
+---------------------------------------PART 2-------------------------------------------------------
+
+Q1: At this point, your solution does not contain any synchronization or
+mutual exclusion.  Give an example of and explain a possible
+synchronization error that could occur in this code. Be specific.
+
+Answer:
+A possible synchronization error that could occur in this code is that of critical section problem. All threads are sharing to access the same buffer. For example, the reader thread is writing to the buffer, whilst adder, grouper, multiplier and sentinel threads are a consuming information from the buffer and writing to it as well. All these threads are not taking turns accessing the buffer, instead they are all working concurrently. For example, when reader writes to buffer, (3*(4+4)), adder, multiplier and degrouper are all working concurrently. All these threads are using a shared data, specifially the buffer.
+
+ASK: Change from threads to processes?
+
+Q2: Suppose we implement correct synchronization and mutual exclusion
+for all of the threads.  If our three functions were to operate on all
+expression in the buffer at once (not just the first expression), would
+the program generate incorrect output?  Why or why not?
+
+Answer:
+
+COMEBACK
+
+This program would generate incorrect output because the threads working on the first expression may be in their critical section whilst the next expression might need to use those same threads. 
+
+
+

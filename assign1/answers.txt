@@ -1,0 +1,234 @@
+QUESTIONS AND ANSWERS TO PART 1 AND 2
+
+-------------------------Questions and Answers to Part 1 - Pointers.txt----------------------
+
+Pointers in C
+-------------
+
+1) Consider the following C program.
+#include <string.h>
+int main(int argc, char *argv[])
+{
+  char *temp;
+  strcpy(temp, argv[0]);
+  return 0;
+}
+
+Why is the above code incorrect (i.e., likely to crash)?
+
+Answer:
+The above code is incorrect as it would cause a Segmentation Fault. temp is a pointer that is not initialized to point to a specific memory address meaning that temp could point to anything! temp needs to be allocated some space of memory either dynamically or atleast as much space as argv[0] to store the copied argv[0] string. 
+
+
+2) Consider the following C program.
+#include <string.h>
+int main(int argc, char *argv[])
+{
+  char temp[9];
+  strcpy(temp, argv[0]);
+  return 0;
+}
+
+A buffer overflow occurs when the program name is 9 characters long
+(e.g., "12345.exe"). Why?
+
+Answer:
+strcpy() function copies the string pointed to by the source, including the terminating null char '\0' to the buffer pointed to by destination. When the program name is 9 characters long, argv[0] takes in the program name as a string and the terminating null char '\0'. Length of argv[0] becomes 10 with the extra null char being accounted. Thus, there would be a buffer overflow as we are trying to copy an array of 10 chars into an array of 9 chars. Buffer overflow occurs as there is more data that is being copied into a fixed length. 
+
+Source used:
+https://www.codingame.com/playgrounds/14213/how-to-play-with-strings-in-c/string-copy
+
+3) Consider the following C program.
+#include <string.h>
+int main(int argc, char *argv[])
+{
+  char *buffer = "Hello";
+  strcpy(buffer, "World");
+  return 0;
+}
+
+Why does this program crash?
+
+Answer: 
+char *buffer = "Hello" is a string literal. In C you cannot modify a string literal as it's stored in a read only location. Instead, buffer could be made to an array or a better fix is to dynamically allocate memory to buffer for example by doing this, 
+char *buffer = malloc(sizeof(*buffer));
+
+4) Consider the following C snippet.
+void myfunc()
+{
+  char b[100];
+  char *buffer = &b[0];
+  strcpy(buffer, "World");
+}
+
+Is this correct?  What's a simpler expression for &b[0]?
+
+Answer:
+Yes, the function works correctly. Simpler expression for &b[0] is b. &b[0] is a base address.  
+
+5) Consider the following C program.
+#include <stdio.h>
+int main(int argc, char* argv[])
+{
+  printf("%s %s %s\n", *argv, (*(argv+1)) + 2, *(argv+2));
+  return 0;
+}
+
+If this code is executed using the following line, what will be the output?
+> program1 -n5 abc
+
+Answer:
+If code is executed with the line ./program1 -n5 abc. The output will be ./program1 5 abc.
+
+6) Consider the following C program.
+#include <stdio.h>
+#include <string.h>
+char *myfunc(char **argv)
+{
+  char buffer[100];
+  strcpy(buffer, "hello");
+  return buffer;
+}
+int main(int argc, char *argv[])
+{
+  char *s = myfunc(argv);
+  printf("%s\n", s);
+}
+
+What's wrong with this?
+
+Answer:
+When myfunc function terminates, it recycles the stack memory it is using, meaning that the buffer array that is declared on stack is released when the block goes out of scope. The myfunc function returns a pointer to the buffer array, which when the function terminates gets deleted. Therefore, it is wrong to return pointers to recycled stack variables.
+
+
+-------------------------Questions and Answers to Part 1 - Debugging.txt----------------------
+
+Part Two: Fixing the Bugs
+-------------------------
+
+Understanding the code
+
+  1) Explain why this program uses the exclamation operator with the
+     strcmp() function.
+
+     Answer:
+     The strcmp() function compares two strings. If two strings are the same then the function returns 0, otherwise it returns a non-zero value. The exclamation operator is used to negate the return value of strcmp(). In C programming 0 is interpretted as false, whilst 1 is interpretted as true. In this program, when the strings are the same the if statement would evaluate !(0) returning true. Whilst if the strings were not the same the if statement would evaluate !(non-zero integer) to return false. 
+
+  2) Explain why the 'LENGTH' macro returns the length of an array.
+     Would it work with a pointer to a dynamically allocated array? (Hint:
+     understand sizeof).
+
+     Answer:
+     In the program the 'LENGTH' macro returns the length of the array and is calculated by sizeof(entries)/ sizeof(*entries), where sizeof(entries) is amount of memory allocated to the whole array of data type WordCountEntry and sizeof(*entries) is the amount of memory allocated to one element in the array, specifically the first element in the entries array. The total amount of memory allocated to the array divided by the amount of memory allocated to one element in the array would return the length of the array.
+
+     No, this would not work with a pointer to a dynamically allocated array as sizeof is determined at compile time and the sizeof a dynamic array is always determined at runtime. Thus, sizeof function will only be able to return the size of the pointer and not the total memory allocated to the array.
+
+Bug hunting
+
+  3) Explain and fix the logical flow bug within the switch statement.
+     (What happens when the -h option is used?)
+    
+     Answer:
+    A break has been added to case 'h' and default case in the switch statement, to break out of the code block. Without the break, the program was falling through and executing the default case even when -h was being written in the command line. 
+
+  4) Explain and fix the argument parsing error. (Why is entrycount never
+     zero?)
+
+    Answer:
+    entryCount would never be zero in the program provided, as entryCount accounts for the program name in it as well and to execute the program, program name is always required in the command line. The entries array would store the program name along with all the other arguments from the command line. Thus, accounting for the program name has been removed in the if statement in the while loop and entryCount incrementation has been corrected.
+
+  5) Fix print_result() to print results correctly and in the same order
+     as the words were specified on the command line.  Explain your solution.
+
+     Answer:
+     In the print_result function, in the while loop entries->word is the same as (*entries).word, where we are always accessing the word item for only the first element in the array and same goes for entries->counter. A fix has been made so that the while loop can look at all the elements in the entries array for eg by doing entries[i].word.
+
+-------------------------Questions and Answers to Part 2 - Step 4 ----------------------------
+
+  1. Why is it necessary to implement a change directory 'cd' command in
+     the shell?  Could it be implemented by an external program instead?
+
+     Answer:
+     Change directory 'cd' command is used to change the current working directory. The 'cd' command is a built-in command, meaning it is implemented in the shell. If 'cd' was implemented by an external program, the command would be executed in a new shell, in a new process. When this 'cd' process starts, it is able to change the working directory successfully. After execution of the process, the 'cd' process exits and the changes that were done by the 'cd' command to change the working directory would be gone. Therefore, it it is necessary to implement the change directory 'cd' command in the shell instead of an external program.
+
+     Source for understanding
+     https://www.quora.com/Unix-Why-is-cd-a-built-in-command-in-the-shell-and-not-an-executable-program-like-the-command-ls
+
+ 2. Explain how our sample shell implements the change directory command.
+
+    Answer:
+    The sample shell uses the chdir() function to implement the change directory command. chdir is able to change the current working directory of the calling process to the path that's been passed as an argument in the function.
+
+ 3. What would happen if this program did not use the fork function, but
+    just used execv directly?  (Try it!)
+
+    Try temporarily changing the code 'pid_from_fork = fork();'
+    to 'pid_from_fork = 0;'
+
+    Answer:
+    When the program does not use the fork function but instead uses the execv function, it is noticed that the shell does not run in an infinite loop. The execv function replaces the current process with a new process. Whilst, the fork function creates a new process (child process) which is a duplicate of the one that calls it and both are able to run simultaneously.
+
+  4. Explain what the return value of fork() means and how this program
+     uses it.
+
+    Answer:
+    The fork function creates a new child process from the parent process which runs simultaneously alongside the parent process.
+    fork() returns a negative value if creation of child process was unsuccessful. It returns a zero to the newly created child process. It also returns a positive value - the pid of the child process to the parent process. In this program we do a check for all possible return values from the fork and do things accordingly for the child and parent processes.
+
+  5. What would happen if fork() were called prior to chdir(), and chdir()
+     invoked within the forked child process?  (Try it!)
+
+     Try temporarily changing the code for 'cd' to use fork:
+
+     if (fork() == 0) {
+         if (chdir(exec_argv[1]))
+             /* Error: change directory failed */
+             fprintf(stderr, "cd: failed to chdir %s\n", exec_argv[1]);
+         exit(EXIT_SUCCESS);
+     }
+
+     Answer:
+     If fork() were called prior to chdir(), and chdir() invoked within the forked child process. Then fork() would create a new child process which would call the chdir() function to change the working directory. This change in directory would only occur in the child process and does not occur in the parent process. 
+
+  6. Can you run multiple versions of ./b.sh in the background?
+     What happens to their output?
+
+     Answer:
+     Yes, multiple versions of ./b.sh can be run in the background. Everytime a child process completes, it returns the control to the parent process. These same steps happen to multiple versions of it, even when another ./b.sh is running in the background.
+
+  7. Can you execute a second instance of our shell from within our shell
+     program (use './shell')?  Which shell receives your input?
+
+     Answer:
+     Yes, we can execute a second instance of our shell within our shell program. The second shell will receive our input.
+
+  8. What happens if you type CTRL-C while the countdown script ./b.sh is
+     running?  What if ./b.sh is running in the background?
+
+     Answer:
+     If you type CTRL-C, when countdown script ./b.sh is running or when ./b.sh is running in the background, it sends an interrupt signal which kills a process with the signal SIGINT. 
+
+  9. Can a shell kill itself?  Can a shell within a shell kill the parent
+     shell?
+
+     ./shell
+     ./shell
+     /bin/kill -s KILL NNN      (Where NNN is the the parent's PID.)
+
+     Answer:
+     Yes, a shell can kill itself. Yes, a shell within a shell can kill the parent shell.
+
+  10. What happens to background processes when you exit from the shell?
+      Do they continue to run?  Can you see them with the 'ps' command?
+
+      ./shell
+      ./b.sh&
+      exit
+      ps
+
+      Answer: 
+      Once you exit from shell, any background processes would still continue running. Yes, I can see them with the 'ps' command.
+
+
+
+
